@@ -27,19 +27,25 @@ class UserService {
 
   async loginUser(username, session_id) {
     try {
-        const existingSession = await redis.get(`userData:${username}`);
-        if (existingSession && existingSession.gameStatus === 'active') {
-            return res.status(400).json({ message: "Username already in use. Please wait for the session to complete." });
+        const existingSession = await redisClient.get(`userData:${username}`);
+        if (existingSession) {
+            // return res.status(400).json({ message: "Username already in use. Ty new user name or Please wait for the session to complete." });
+            throw new Error("Username already in use. Ty new user name or Please wait for the session to complete.")
         }
 
         // Call repository function to find the user
-        const user = await userRepository.findUserByUsernameOrSessionId(username, session_id);
+        let user = await userRepository.findUserByUsernameOrSessionId(username, session_id);
     
         if (!user) {
             // If no user found, throw error to be handled in the controller
+
             return null;
         }
-    
+        // create the new radis cache
+        const sessionId = `session_${uuidv4()}`;
+        user = await userRepository.updateSessionId(user, sessionId);
+        await redisClient.setEx(`userData:${sessionId}`, 86400, JSON.stringify(user));
+        await redisClient.set(`userData:${user.username}`, JSON.stringify({is_present: true}), 'EX', 86400);
         // Return user data if found
         return user;
     } catch (error) {

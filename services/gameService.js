@@ -4,6 +4,7 @@ import userRepository from '../repositories/userRepository.js';
 import questionRepository from '../repositories/questionRepository.js';
 import userResponseRepository from '../repositories/userResponseRepository.js';
 import redisClient from '../config/redisClient.js';
+import userResponseService from './userResponseService.js';
 
 class GameService {
     async startGame(name, createdBy, noOfQuestions, mode, playersUserIDs) {
@@ -41,7 +42,7 @@ class GameService {
             return {
                 game: {
                     name: newGame.name,
-                    game_id: game._id,
+                    game_id: newGame._id,
                     mode: newGame.mode,
                 }
             };
@@ -67,44 +68,56 @@ class GameService {
         }
 
         // 🚀 **Check if all questions have been asked**
+        console.log("gameSession.asked_questions.length=======", gameSession.asked_questions.length)
+        console.log("=====gameSession.no_of_questions===", gameSession.no_of_questions)
         if (gameSession.asked_questions.length >= gameSession.no_of_questions) {
             // Update game status to "completed"
             gameSession.status = 'completed';
+            await userResponseService.syncResponsesToDB(gameId);
             // delete teh cache, if game is completed
             await redisClient.del(`game:${gameId}:responses`);
             gameRepository.updateGameStatus(gameId, 'completed'); // Async DB update
-            return null; // No more questions left
+            return { question: null }; // No more questions left
         }
 
         // Fetch a random question that hasn't been asked
-        const newQuestion = await questionRepository.getRandomQuestionExcluding(asked_questions);
+        const newQuestion = await questionRepository.getRandomQuestionExcluding(gameSession.asked_questions);
 
         if (!newQuestion) {
             // gameSession, no new question left game completed
             gameSession.status = 'completed';
+            // update the bulk here
+            await userResponseService.syncResponsesToDB(gameId);
             await redisClient.del(`game:${gameId}:responses`);
             gameRepository.updateGameStatus(gameId, 'completed'); 
-            return null;
+            return { question: null };
         } // No new questions available
 
         // Add question to asked list
-        asked_questions.push(newQuestion._id);
-        gameSession.asked_questions = asked_questions;
+        gameSession.asked_questions.push(newQuestion._id);
+        // gameSession.asked_questions = asked_questions;
 
         // Update Redis session
         await redisClient.set(`game:${gameId}`, JSON.stringify(gameSession), 'EX', 86400);
 
         // ✅ **Batch update MongoDB in background**
-        if (asked_questions.length % 5 === 0 || asked_questions.length === no_of_questions) {
-            gameRepository.updateAskedQuestions(gameId, asked_questions);
+        if (gameSession.asked_questions.length % 5 === 0 || gameSession.asked_questions.length === gameSession.no_of_questions) {
+            gameRepository.updateAskedQuestions(gameId, gameSession.asked_questions);
+            if (gameSession.asked_questions.length === gameSession.no_of_questions) {
+                gameSession.status = 'completed';
+                // await redisClient.del(`game:${gameId}:responses`);
+                // await redisClient.del(`game:${gameId}`);
+                await gameRepository.updateGameStatus(gameId, 'completed'); 
+                return { question: null };
+            }
             // delete the cache here
-            await redisClient.del(`game:${gameId}`);
+            // await redisClient.del(`game:${gameId}`);
         }
 
         return {
             question: newQuestion.clues,
             options: newQuestion.options,
-            remaining_questions: no_of_questions - asked_questions.length, // 📌 Send remaining question count
+            remaining_questions: gameSession.no_of_questions - gameSession.asked_questions.length, // 📌 Send remaining question count
         };
     }
     

@@ -5,13 +5,13 @@ class SessionMiddleware {
   async protect(req, res, next) {
     try {
       const sessionId = req.headers["x-session-id"]; // Extract session_id from headers
-
+      // const user_name = req.headers["username"]
       if (!sessionId) {
         return res.status(401).json({ message: "Session ID is required" });
       }
 
       // Check in Redis cache first (for better performance)
-      let userData = await redisClient.get(sessionId);
+      let userData = await redisClient.get(`userData:${sessionId}`);
       if (!userData) {
         // Fetch from MongoDB if not found in Redis
         const user = await userRepositoryInstance.findUserByUsernameOrSessionId(sessionId);
@@ -20,7 +20,8 @@ class SessionMiddleware {
         }
 
         // Cache user data in Redis with TTL (e.g., 24 hours)
-        await redisClient.setEx(sessionId, 86400, JSON.stringify(user)); // 86400 seconds = 24 hours
+        await redisClient.setEx(`userData:${sessionId}`, 86400, JSON.stringify(user)); // 86400 seconds = 24 hours
+        await redisClient.setEx(`userData:${user.username}`, 86400, JSON.stringify({is_present: true}));
         userData = JSON.stringify(user);
       }
 

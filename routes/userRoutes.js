@@ -12,6 +12,7 @@ router.use(sessionMiddleware.protect);
 router.get('/me', userController.getProfile);
 
 // router.get(
+
 //   '/total-score',
 //   userController.getMe,
 //   userController.getUserScore

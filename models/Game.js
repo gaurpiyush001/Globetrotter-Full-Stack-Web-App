@@ -24,7 +24,7 @@ const gameSchema = new mongoose.Schema(
     players: [
       {
         user_id: {
-          type: String,
+          type: mongoose.Schema.ObjectId,
           required: true,
         },
         correct: {
@@ -40,12 +40,12 @@ const gameSchema = new mongoose.Schema(
       },
     ],
     created_by: {
-      type: String, // Reference to the user who created
+      type: mongoose.Schema.ObjectId, // Reference to the user who created
       required: true,
       ref: 'User',
     },
     asked_questions: {
-      type: [String], // Array of question IDs
+      type: [mongoose.Schema.ObjectId], // Array of question IDs
       required: true,
       validate: {
         validator: function (arr) {

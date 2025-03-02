@@ -1,21 +1,22 @@
+import redisClient from '../config/redisClient.js';
 import gameService from '../services/gameService.js';
 
 class GameController {
   async startGame(req, res) {
     try {
-      const { name, no_of_questions = 5, gameRoomName, mode = "single", playersUserName = []/*unique useranme you get*/ } = req.body;
+      const { roomName, numQuestions = 5, mode = "single", playersUserIds = []/*unique useranme you get*/ } = req.body;
 
-      if ( playersUserName.length == 0 ){
-        playersUserName.push(req.user.username);
-      }
+      // if ( playersUserIds.length == 0 ){
+      playersUserIds.push(req.user._id);
+      // }
 
-      if ( mode == "single" && playersUserName.length > 1 ) {
+      if ( mode == "single" && playersUserIds.length > 1 ) {
         return res.status(404).json({ message: 'Create a multi player game mode for players more than 1!' });
-      } else if ( mode === "multiplayer" && playersUserName.length <= 1 ) {
-        return res.status(404).json({ message: 'Create a single plyaer game mode!' });
+      } else if ( mode === "multiplayer" && playersUserIds.length <= 1 ) {
+        return res.status(404).json({ message: 'Create a single player game mode!' });
       } 
 
-      const gameData = await gameService.startGame(name, req.user.username, no_of_questions, gameRoomName, mode, playersUserName);
+      const gameData = await gameService.startGame(roomName, req.user._id, numQuestions, mode, playersUserIds);
       return res.status(201).json(gameData);
     } catch (error) {
       return res.status(500).json({ message: error.message });
@@ -26,13 +27,26 @@ class GameController {
     try {
       const { gameId } = req.params;
       const question = await gameService.getNextQuestion(gameId);
+      let gameSession = await redisClient.get(`game:${gameId}`);
+      
 
-      if (!question) {
+      if (!question || question.question === null) {
+        redisClient.del(`game:${gameId}`);
+        let player_stats = [];
+        let total_score = 0;
+        gameSession = JSON.parse(gameSession);
+        console.log("========= lastr ended ", gameSession, gameSession.players)
+        if ( gameSession.players && gameSession.players.length > 0 ) {
+          player_stats = gameSession.players[0];
+          total_score = player_stats.correct - player_stats.incorrect;
+          console.log("========= total_Score", total_score) 
+        }
         // do something here if game is complete set the game status as complete
-        return res.status(404).json({ message: 'Game Completed. No more questions available!' });
+        return res.status(200).json({ question: { question : null, total_score, player_stats }  });
       }
 
-      res.json({ question });
+      // res.json({ question });
+      return res.status(200).json({question});
     } catch (error) {
       console.error('Error fetching question:', error);
       res.status(500).json({ message: 'Internal server error' });

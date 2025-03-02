@@ -8,10 +8,10 @@ class UserController {
       if (!username) return res.status(400).json({ error: 'Username is required' });
 
       const user = await userServiceInstance.registerUser(username, source, role);
-      return res.status(201).json({ message: "User registered", userdata: { session_id: user.session_id, user_name: user.username, user_score: user.total_score } });
+      return res.status(201).json({ message: "User registered", user_data: { session_id: user.session_id, user_name: user.username, user_score: user.total_score } });
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ message: error.message });
     }
   }
 
@@ -33,14 +33,15 @@ class UserController {
         });
       } else {
         // If user not found, suggest registration
-        res.status(404).json({
-          message: 'User not found, please register.',
-        });
+        // res.status(404).json({
+        //   message: 'User not found, please register.',
+        // });
+        throw new Error(`User not found, please register.`)
       }
     } catch (error) {
       console.error(error);
-      res.status(500).json({
-        message: 'Server error during login.',
+      res.status(400).json({
+        message: error.message,
       });
     }
   }

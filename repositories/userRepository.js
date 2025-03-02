@@ -26,7 +26,7 @@ class UserRepository {
       // Search for user by either username or session_id
       const user = await User.findOne({ 
         $or: [{ username }, { session_id }] 
-      }).select('-__v -_id -session_id');
+      }).select('-__v -session_id');
   
       if (user) {
         // If a user is found, return the user object
@@ -41,7 +41,26 @@ class UserRepository {
     }
   }
 
-
+  async updateSessionId(user, sessionID) {
+    try {
+      // Update the sessionId of the user
+      const updatedUser = await User.findOneAndUpdate(
+        { username: user.username },  // Find the user by their username
+        { session_id: sessionID },    // Set the new session_id
+        { new: true }                 // Return the updated user object
+      );
+  
+      if (!updatedUser) {
+        throw new Error('User not found');
+      }
+  
+      // Optionally, return the updated user or just return success
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating sessionId:', error);
+      throw new Error('Error updating session ID');
+    }
+  }
 
 }
 

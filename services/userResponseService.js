@@ -4,7 +4,7 @@ import userResponseRepository from '../repositories/userResponseRepository.js';
 import redisClient from '../config/redisClient.js';
 
 class UserResponseService {
-  async processAnswer(gameId, userId, selectedOption) {
+  async processAnswer(gameId, userId, questionId, selectedOption) {
     // 🔹 **Fetch game session from Redis**
     let gameSession = await redisClient.get(`game:${gameId}`);
     let timestamp = Date.now();
@@ -26,19 +26,21 @@ class UserResponseService {
     if (!currentQuestionId) {
         // burst the cache here for this game
         throw new Error('No active question');
+        // return { gameSession.players }
     }
 
     // ✅ **Validate user response**
-    const questionData = await redisClient.get(`question:${currentQuestionId}`);
+    let questionData = await redisClient.get(`question:${currentQuestionId}`);
     let correctAnswer;
     
     if (!questionData) {
-      const questionFromDB = await questionRepository.findQuestionById(currentQuestionId);
-      if (!questionFromDB) throw new Error('Invalid question');
-      correctAnswer = questionFromDB.answer;
-      await redisClient.set(`question:${currentQuestionId}`, JSON.stringify(questionFromDB), 'EX', 86400);
+      questionData = await questionRepository.findQuestionById(currentQuestionId);
+      if (!questionData) throw new Error('Invalid question');
+      correctAnswer = questionData.answer;
+      await redisClient.set(`question:${currentQuestionId}`, JSON.stringify(questionData), 'EX', 86400);
     } else {
-      correctAnswer = JSON.parse(questionData).answer;
+      questionData = JSON.parse(questionData);
+      correctAnswer = questionData.answer;
     }
 
     const isCorrect = selectedOption === correctAnswer;
@@ -65,11 +67,15 @@ class UserResponseService {
     );
 
     // **Batch update MongoDB asynchronously**
-    if (asked_questions.length % 5 === 0 || mode === 'multiplayer') {
-      this.syncResponsesToDB(gameId);
+    console.log(asked_questions.length % 5 === 0)
+    console.log(mode) 
+    console.log(asked_questions.length === gameSession.no_of_questions)
+    if (asked_questions.length % 5 === 0 || mode === 'multiplayer' || asked_questions.length === gameSession.no_of_questions - 1) {
+      console.log(" are you coming here !!!!!!!!!!")
+      await this.syncResponsesToDB(gameId);
     }
 
-    return { isCorrect, correctAnswer, answerMetadata: questionData.answer_metadata };
+    return { isCorrect, correctAnswer, answerMetadata: questionData.answer_metadata, fun_facts: isCorrect ?questionData.answer_metadata : null, player_stats: gameSession.players };
   }
 
   // 🔹 **Batch update responses in MongoDB (executed in background)**
@@ -80,6 +86,7 @@ class UserResponseService {
     const parsedResponses = responses.map(resp => JSON.parse(resp));
 
     // ✅ **Bulk insert user responses**
+    console.log("========== inserting blk=====")
     await userResponseRepository.bulkInsertUserResponses(parsedResponses);
 
     // ✅ **Update game player stats in MongoDB**

@@ -7,7 +7,7 @@ import helmet from 'helmet'; // Security HTTP headers
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 // import hpp from 'hpp';
-// import cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 
 import AppError from './utils/appError.js';
 import globalErrorHandler from './controllers/errorController.js';
@@ -24,6 +24,14 @@ const __dirname = path.dirname(__filename);
 const app = express(); // Express instance
 
 // 1) GLOBAL MIDDLEWARES
+
+
+import cors from "cors";
+
+app.use(cors({
+  origin: "http://localhost:3001", // Allow frontend origin
+  credentials: true, // Allow cookies/session storage
+}));
 
 // Serving Static Files
 app.use(express.static(path.join(__dirname, 'public'))); // Serve static assets
@@ -47,7 +55,7 @@ app.use('/api', limiter);
 // Body Parser: Read data from request body
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-// app.use(cookieParser()); // Parse cookies
+app.use(cookieParser()); // Parse cookies
 
 // Data Sanitization
 app.use(mongoSanitize()); // Prevent NoSQL query injection

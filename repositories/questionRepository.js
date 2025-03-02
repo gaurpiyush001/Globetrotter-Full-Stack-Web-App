@@ -2,7 +2,7 @@ import Question from '../models/Question.js';
 
 class QuestionRepository {
     async findQuestionById(questionId) {
-        return await Question.findById(questionId).select('-_id -destination -createdBy');
+        return await Question.findById(questionId).select('-_id -clues -destination -createdBy');
     }
 
     //   async getUnaskedQuestion(askedQuestions) {
