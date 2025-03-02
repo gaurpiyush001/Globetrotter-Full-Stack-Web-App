@@ -14,7 +14,7 @@ class SessionMiddleware {
       let userData = await redisClient.get(`userData:${sessionId}`);
       if (!userData) {
         // Fetch from MongoDB if not found in Redis
-        const user = await userRepositoryInstance.findUserByUsernameOrSessionId(sessionId);
+        const user = await userRepositoryInstance.findUserByUsernameOrSessionId(null, sessionId);
         if (!user) {
           return res.status(401).json({ message: "Invalid or expired session" });
         }
