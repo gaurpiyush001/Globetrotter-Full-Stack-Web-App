@@ -8,7 +8,7 @@ class UserController {
       if (!username) return res.status(400).json({ error: 'Username is required' });
 
       const user = await userServiceInstance.registerUser(username, source, role);
-      return res.status(201).json({ message: "User registered", user_data: { session_id: user.session_id, user_name: user.username, user_score: user.total_score } });
+      return res.status(201).json({ message: "User registered", session_id: user.session_id, username: user.username, total_score: user.total_score });
     } catch (error) {
       console.error(error);
       return res.status(400).json({ message: error.message });
