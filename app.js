@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: './config.env' });
 import path from 'path'; // Built-in core module, used to manipulate path names
 import { fileURLToPath } from 'url'; // Needed to replace __dirname in ES modules
 import express from 'express';
@@ -29,7 +31,7 @@ const app = express(); // Express instance
 import cors from "cors";
 
 app.use(cors({
-  origin: "http://localhost:3001", // Allow frontend origin
+  origin: process.env.FRONTEND_URL, // Allow frontend origin
   credentials: true, // Allow cookies/session storage
 }));
 
