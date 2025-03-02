@@ -17,13 +17,13 @@ console.log(process.env);//--->Uncomment this and see all the process Environmen
 
 import app from './app.js';
 
-// const DB = process.env.DATABASE.replace(
-//   '<PASSWORD>',
-//   process.env.DATABASE_PASSWORD
-// );
+const DB = process.env.DATABASE.replace(
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD
+);
 // U6P9iGO0EqgsluSs
 // cEGNY8ZsXp3GLVWs
-const DB = "mongodb+srv://gaurpiyush001:U6P9iGO0EqgsluSs@cluster-globetrotter.gb19p.mongodb.net/globetrotter_game_db?retryWrites=true&w=majority&appName=Cluster-Globetrotter"
+// const DB = "mongodb+srv://gaurpiyush001:U6P9iGO0EqgsluSs@cluster-globetrotter.gb19p.mongodb.net/globetrotter_game_db?retryWrites=true&w=majority&appName=Cluster-Globetrotter"
 
 
 //Yaha NodeJs ke code ko MondoDB Server/MongoDB database se connect kr raha hun 
