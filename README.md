@@ -6,6 +6,15 @@ This document outlines the technical standards and procedures for user registrat
 
 ---
 
+## DB DESIGN
+
+![image](https://github.com/user-attachments/assets/5cfb154f-75e0-4cc5-9774-acd5a7e1bebc)
+
+### Destination COLLECTION
+![image](https://github.com/user-attachments/assets/f8f3d7fb-6671-4727-aae3-697d3177645f)
+
+
+
 ## 1. **User Registration Flow**
 
 ### 1.1 **New User Registration**
@@ -13,7 +22,7 @@ When a new user enters a username and hits the `/register` API, the following st
 
 1. The system checks if the username exists in the database.
 2. If the username doesn't exist in the database, the system proceeds with registration.
-3. The username is then added to the system with a unique session ID, which is stored in **Redis** to track the active session.
+3. The username is then added to the system with a unique session ID, which is stored in **Redis** as well as MongoDB to track the active session.
 
 ### 1.2 **Error Handling for Duplicate Username**
 If a user with the same username tries to register again, the `/register` API will return an error message, instructing the user to log in with the existing username.
