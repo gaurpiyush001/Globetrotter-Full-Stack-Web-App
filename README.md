@@ -13,6 +13,15 @@ This document outlines the technical standards and procedures for user registrat
 ### Destination COLLECTION
 ![image](https://github.com/user-attachments/assets/f8f3d7fb-6671-4727-aae3-697d3177645f)
 
+### User Responses
+![image](https://github.com/user-attachments/assets/f68feaee-0520-4071-b0b6-516d83b6fc5b)
+
+
+## GAME SNAPSHOTS
+![image](https://github.com/user-attachments/assets/5ff90bbd-56b9-4c8c-8322-223a07225556)
+
+![image](https://github.com/user-attachments/assets/cdc7b27a-7b53-4dd5-9ccb-845e19fbd874)
+
 
 
 ## 1. **User Registration Flow**
@@ -55,9 +64,6 @@ When a user tries to log in using a previously registered username, the followin
   
 - To handle this, we need to implement a mechanism that can **expire or clear** the session in Redis if the session ID does not match the one in the browser. This can be achieved by:
   1. **Session Expiry**: The Redis session can have a TTL (time-to-live) set for the session, and after a certain period, the session will expire.
-  2. **Manual Cache Burst**: If a user logs in again after removing cookies, the system should check the session in Redis, and if the session is invalid or expired, it should be removed from Redis.
-
-   **Solution**: We can implement an API endpoint or a scheduled job that checks the session status in Redis and removes expired or invalid sessions.
 
 ### 3.2 **Track Score by Session**
 - Scores are tracked based on the session ID, not the username.
@@ -84,9 +90,9 @@ When a user tries to log in using a previously registered username, the followin
 
 - When all questions have been answered:
   - The game status is updated to **"completed"** in Redis.
-  - The game data is synced with MongoDB, storing the total score and responses.
+  - The game data is synced with MongoDB, storing the total score and responses (BATCH UPDATE VIA REDIS TO MONGO DB, to achieve lightening fast experience).
 
-### 4.2 **Multiplayer Mode**
+### 4.2 **Multiplayer Mode** (Not fully implemented)
 - For multiplayer mode, a user fills out a game start form with the player mode and number of questions in the game.
 - When a user registers for multiplayer:
   1. Their username is registered in the **User table**.
@@ -129,7 +135,7 @@ When a user tries to log in using a previously registered username, the followin
 ## 7. **Technical Standards**
 
 - **Session Management**: Use **Redis** for session management with TTL for automatic session expiration.
-- **Database**: **MongoDB** will store user profiles, but game progress (score, questions) will be cached in Redis for fast access.
+- **Database**: **MongoDB** will store user profiles, but game progress (score, questions) will be cached in Redis for fast access, later done batch updating to mongodb for persistence.
 - **Scalability**: The system should be designed to scale with Redis for handling large numbers of active sessions and game states.
 - **Security**: Use **HTTPS** for secure communication and **JWT** or **session cookies** to maintain secure user sessions.
 
